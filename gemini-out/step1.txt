@@ -1,0 +1,40 @@
+Step 1: Understand the Project Context & Goal
+To: AI Assistant (Claude / Windsurf)
+
+Subject: Project Brief: The Regenerative Ratio Dashboard
+
+Before you begin coding, it is essential to understand the project's conceptual foundation. You are tasked with building a web application that serves as an interactive tool for the "Regenerative Ratio Formula," a framework designed to measure a system's health.
+
+Core Concepts:
+
+The application is based on two primary metrics detailed in a research paper by Daniel Mihai and Sharon Gal-Or:
+
+The Regenerative Ratio (Re): This measures a system's potential to regenerate.
+
+Formula: Re = (L * I * F * E) / (X + Fg + Ω)
+
+Purpose: It compares regenerative capacities (like Interconnection I and Feedback F) against degenerative pressures (like Extractive Pressure X and Fragmentation Fg).
+
+Output: The raw score is log-transformed (Re log) for easier interpretation on charts.
+
+The Realized Regeneration Index (Rx): This measures a system's actual, observable outcomes.
+
+Formula: It's the average of several user-defined performance indicators.
+
+Purpose: It grounds the theoretical potential of Re in real-world results.
+
+Output: The score is scaled (Rx scaled) to be visually comparable with Re log.
+
+Application's Core Functionality:
+
+The end-user application must allow a user to:
+
+Create and manage distinct "Projects" to analyze different systems (e.g., a farm, a company).
+
+Save multiple "Time Point Snapshots" for each project, capturing all the Re and Rx scores at a specific moment.
+
+Visualize the evolution of Re log and Rx scaled over time on a line chart.
+
+Store all data in the browser's localStorage, ensuring the app works without a backend or user accounts.
+
+Your first task is to absorb this context. In the next step, you will be instructed on how to take the existing prototype and rebuild it in a professional development environment.

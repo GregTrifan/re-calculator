@@ -1,0 +1,22 @@
+Step 2: Migrate the Prototype to a Vite + React Application
+To: AI Assistant (Claude / Windsurf)
+
+Subject: Code Migration and Project Setup
+
+Your next task is to take the existing prototype and refactor it into a standard, production-ready Vite + React application. The prototype is a single HTML file (coming-from-gemini.html) where all libraries are loaded from a CDN. This is not a scalable approach, so you will rebuild it properly.
+
+Action Items:
+
+Refactor the Code from the Prototype:
+
+Break down the prototype's code into individual React components (e.g., Dashboard.jsx, Slider.jsx, ProjectManager.jsx) and place them in this new directory.
+
+The main App component should reside in src/App.jsx.
+
+This is critical: Replace all CDN-based library access with modern ES6 import statements at the top of each relevant file.
+
+Example 1: const { useState } = React; becomes import { useState } from 'react';
+
+Example 2: const { LineChart } = window.Recharts; becomes import { LineChart, ... } from 'recharts';
+
+After completing these steps, you should have a fully functional Vite application that runs locally and replicates the prototype's functionality but with a professional project structure. You are now ready for Step 3.

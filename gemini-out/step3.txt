@@ -1,0 +1,34 @@
+Step 3: Develop New Features
+To: AI Assistant (Claude / Windsurf)
+
+Subject: New Feature Development Plan
+
+Now that you have successfully migrated the application to a Vite + React project structure, your final task is to implement three new features to enhance its analytical capabilities.
+
+Task List:
+
+Implement the Re/Rx Quadrant Chart:
+
+Goal: Allow users to instantly see the current state of their system in the context of the four quadrants defined in the source document.
+
+Implementation:
+
+In the Dashboard.jsx component, use the ScatterChart component from the recharts library.
+
+The chart's X-axis should represent Re log (Potential) and the Y-axis should represent Rx scaled (Outcome).
+
+Plot a single point representing the most recent time point snapshot for the active project.
+
+Use <ReferenceArea> components or background styling to visually divide the chart into the four quadrants: "Thriving System" (top-right), "Latent Potential" (bottom-right), "Unsustainable Performance" (top-left), and "Degenerative System" (bottom-left).
+
+Improve Data Management & Visibility:
+
+Goal: Make it easier for users to review and understand their saved data.
+
+Implementation:
+
+Populate Label on Load: In the App.jsx component, modify the loadTimePoint function. When a user clicks the "Load" button for a saved snapshot, ensure the "Snapshot Label" input field is also populated with the label of that snapshot.
+
+Expandable Snapshot Details: In the Dashboard.jsx component, make each item in the "Saved Time Points" list expandable. When a user clicks to expand an item, it should display a detailed breakdown of the individual scores (L, I, F, E, X, Fg, Ω) that were part of that saved snapshot.
+
+Upon completion of these tasks, the application will be a feature-complete analysis tool.
