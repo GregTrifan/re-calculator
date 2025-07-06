@@ -203,6 +203,7 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
         </p>
       </div>
       
+      <div className="h-[500px]">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
           margin={{ top: 10, right: 10, bottom: 40, left: 40 }}
@@ -309,6 +310,7 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
           />
         </ScatterChart>
       </ResponsiveContainer>
+      </div>
       
       <div className="mt-2 text-xs text-gray-400 text-center">
         <p>Hover over points for details • Click on snapshots to view details</p>
