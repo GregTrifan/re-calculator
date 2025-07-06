@@ -468,7 +468,7 @@ function App() {
                   value={snapshotLabel}
                   onChange={(e) => setSnapshotLabel(e.target.value)}
                   placeholder="Enter a label (optional)"
-                  className="flex-1 p-2 border rounded"
+                  className="flex-1 p-2 border rounded placeholder:opacity-50 placeholder:text-gray-600"
                 />
                 <button
                   type="submit"
