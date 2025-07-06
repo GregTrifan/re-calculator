@@ -6,6 +6,7 @@ import ProjectManager from './components/ProjectManager';
 import ReMetricSlider from './components/ReMetricSlider';
 import RxIndicatorInput from './components/RxIndicatorInput';
 import QuadrantChart from './components/QuadrantChart';
+import TemporalEvolutionChart from './components/TemporalEvolutionChart';
 import { InfoIcon, PlusIcon, TrashIcon, PencilIcon, CheckIcon, XIcon } from './components/Icons';
 import Tooltip from './components/Tooltip';
 
@@ -59,7 +60,7 @@ export const variableDefinitions = {
   },
 };
 
-function App() {
+function ReRxManager() {
   // State management
   const [projects, setProjects] = useState(() => {
     try {
@@ -507,6 +508,12 @@ function App() {
             )}
           </div>
 
+          {/* Temporal Evolution Chart */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Temporal Evolution</h2>
+            <TemporalEvolutionChart data={snapshots} />
+          </div>
+
           {/* Quadrant Chart */}
           {showQuadrantChart && (
             <QuadrantChart
@@ -553,4 +560,4 @@ function App() {
   );
 }
 
-export default App;
+export default ReRxManager;

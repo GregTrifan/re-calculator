@@ -221,7 +221,7 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
             axisLine={{ stroke: '#9ca3af' }}
           >
             <Label 
-              value="Extractive Pressure (X + Fg + Ω)" 
+              value="Re (Regenerative Capacity)" 
               offset={5} 
               position="bottom"
               style={{ fontSize: 12 }}
@@ -239,7 +239,7 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
             axisLine={{ stroke: '#9ca3af' }}
           >
             <Label 
-              value="Regenerative Potential (L×I×F×E)" 
+              value="Rx (Realized Regenerative Output)" 
               angle={-90} 
               position="left"
               style={{ textAnchor: 'middle', fontSize: 12 }}
