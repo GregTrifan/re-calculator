@@ -557,14 +557,14 @@ function ReRxManager() {
             </button>
           </div>
         </div>
-        <p className="text-gray-600">Re/Rx is a dual diagnostic lens that reveals a system’s regenerative capacity (Re) and its real-world outcomes (Rx), enabling you to assess coherence, track transformation, and intervene before collapse or greenwash sets in.</p>
+        <p className="text-gray-600">Re/Rx is a dual diagnostic lens that reveals a system’s regenerative capacity (Re) and its real-world outcomes (Rx)</p>
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Metrics */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Regenerative Metrics</h2>
+            <h2 className="text-xl font-semibold mb-4">Regenerative Capacity (Re) Indicators</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(metrics).map(([key, value]) => {
                 const definition = variableDefinitions[key];
