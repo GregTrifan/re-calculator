@@ -21,7 +21,7 @@ const TemporalEvolutionChart = ({ data = [] }) => {
   }
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full" style={{ aspectRatio: '1/1', maxWidth: '600px', margin: '0 auto' }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}
