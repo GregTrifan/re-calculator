@@ -557,7 +557,7 @@ function ReRxManager() {
             </button>
           </div>
         </div>
-        <p className="text-gray-600">Measure and track your system's health over time</p>
+        <p className="text-gray-600">Re/Rx is a dual diagnostic lens that reveals a system’s regenerative capacity (Re) and its real-world outcomes (Rx), enabling you to assess coherence, track transformation, and intervene before collapse or greenwash sets in.</p>
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
