@@ -6,6 +6,7 @@ import { generateColorFromId, getLightBackgroundColor } from './utils/colorUtils
 import ProjectManager from './components/ProjectManager';
 import ReMetricSlider from './components/ReMetricSlider';
 import RxIndicatorInput from './components/RxIndicatorInput';
+import ReMetricInput from './components/ReMetricInput';
 import QuadrantChart from './components/QuadrantChart';
 import TemporalEvolutionChart from './components/TemporalEvolutionChart';
 import { InfoIcon, PlusIcon, TrashIcon, PencilIcon, CheckIcon, XIcon } from './components/Icons';
@@ -22,6 +23,16 @@ const INITIAL_METRICS = {
   X: 5,
   Fg: 5,
   Omega: 5
+};
+
+const INITIAL_METRIC_COMMENTS = {
+  L: '',
+  I: '',
+  F: '',
+  E: '',
+  X: '',
+  Fg: '',
+  Omega: ''
 };
 
 const INITIAL_RX_INDICATORS = [
@@ -76,6 +87,8 @@ function ReRxManager() {
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [metrics, setMetrics] = useState(INITIAL_METRICS);
   const [rxIndicators, setRxIndicators] = useState(INITIAL_RX_INDICATORS);
+  const [indicatorComments, setIndicatorComments] = useState({});
+  const [metricComments, setMetricComments] = useState(INITIAL_METRIC_COMMENTS);
   const [snapshotLabel, setSnapshotLabel] = useState('');
   const [editingSnapshotId, setEditingSnapshotId] = useState(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
@@ -215,6 +228,21 @@ function ReRxManager() {
     const { reLog } = calculateRe();
     const { rxScaled } = calculateRx();
 
+    // Prepare indicators with their comments
+    const indicatorsWithComments = rxIndicators.map(indicator => ({
+      ...indicator,
+      comment: indicatorComments[indicator.id] || ''
+    }));
+
+    // Prepare metrics with their comments for saving
+    const metricsWithComments = Object.keys(metrics).reduce((acc, key) => ({
+      ...acc,
+      [key]: metrics[key] // Keep just the value for now to maintain backward compatibility
+    }), {});
+
+    // Store metric comments separately in the snapshot
+    const snapshotMetricComments = { ...metricComments };
+
     setProjects(prevProjects =>
       prevProjects.map(proj => {
         if (proj.id === activeProjectId) {
@@ -225,8 +253,9 @@ function ReRxManager() {
                 return {
                   ...tp,
                   label: snapshotLabel.trim() || `Snapshot ${new Date().toLocaleString()}`,
-                  metrics: { ...metrics },
-                  rxIndicators: [...rxIndicators],
+                  metrics: metricsWithComments,
+                  metricComments: snapshotMetricComments,
+                  rxIndicators: indicatorsWithComments,
                   reLog,
                   rxScaled,
                   x: reLog,
@@ -244,6 +273,7 @@ function ReRxManager() {
     // Reset editing state
     setEditingSnapshotId(null);
     setSnapshotLabel('');
+    setIndicatorComments({});
   };
 
   // Cancel editing and reset form
@@ -251,6 +281,8 @@ function ReRxManager() {
     setEditingSnapshotId(null);
     setMetrics(INITIAL_METRICS);
     setRxIndicators(INITIAL_RX_INDICATORS);
+    setIndicatorComments({});
+    setMetricComments(INITIAL_METRIC_COMMENTS);
     setSnapshotLabel('');
   };
 
@@ -263,6 +295,12 @@ function ReRxManager() {
       return;
     }
 
+    // Prepare indicators with their comments
+    const indicatorsWithComments = rxIndicators.map(indicator => ({
+      ...indicator,
+      comment: indicatorComments[indicator.id] || ''
+    }));
+
     const label = customLabel || (snapshotLabel.trim() !== '' ? snapshotLabel : `Snapshot ${new Date().toLocaleString()}`);
     console.log('Using label:', label);
 
@@ -274,8 +312,12 @@ function ReRxManager() {
       id: Date.now().toString(),
       label: label.trim(),
       timestamp: new Date().toISOString(),
-      metrics: { ...metrics },
-      rxIndicators: rxIndicators.map(({ id, name, value }) => ({ id, name, value })),
+      metrics: Object.keys(metrics).reduce((acc, key) => ({
+        ...acc,
+        [key]: metrics[key] // Keep just the value for now to maintain backward compatibility
+      }), {}),
+      metricComments: { ...metricComments },
+      rxIndicators: indicatorsWithComments,
       reLog,
       rxScaled,
       // Add coordinates for quadrant chart using the calculated values
@@ -338,16 +380,35 @@ function ReRxManager() {
 
     // Update metrics
     setMetrics({
-      ...snapshot.metrics,
-      // Ensure all metrics are defined and within range
-      L: Math.min(10, Math.max(0, snapshot.metrics.L || 5)),
-      I: Math.min(10, Math.max(0, snapshot.metrics.I || 5)),
-      F: Math.min(10, Math.max(0, snapshot.metrics.F || 5)),
-      E: Math.min(10, Math.max(0, snapshot.metrics.E || 5)),
-      X: Math.min(10, Math.max(0, snapshot.metrics.X || 5)),
-      Fg: Math.min(10, Math.max(0, snapshot.metrics.Fg || 5)),
-      Omega: Math.min(10, Math.max(0, snapshot.metrics.Omega || 5))
+      L: Math.min(10, Math.max(0, snapshot.metrics?.L || 5)),
+      I: Math.min(10, Math.max(0, snapshot.metrics?.I || 5)),
+      F: Math.min(10, Math.max(0, snapshot.metrics?.F || 5)),
+      E: Math.min(10, Math.max(0, snapshot.metrics?.E || 5)),
+      X: Math.min(10, Math.max(0, snapshot.metrics?.X || 5)),
+      Fg: Math.min(10, Math.max(0, snapshot.metrics?.Fg || 5)),
+      Omega: Math.min(10, Math.max(0, snapshot.metrics?.Omega || 5))
     });
+
+    // Load metric comments if they exist
+    if (snapshot.metricComments) {
+      setMetricComments({
+        ...INITIAL_METRIC_COMMENTS,
+        ...snapshot.metricComments
+      });
+    } else {
+      setMetricComments(INITIAL_METRIC_COMMENTS);
+    }
+
+    // Load indicator comments
+    if (snapshot.rxIndicators) {
+      const comments = {};
+      snapshot.rxIndicators.forEach(ind => {
+        if (ind.comment) {
+          comments[ind.id] = ind.comment;
+        }
+      });
+      setIndicatorComments(comments);
+    }
     
     // Set the snapshot label if we're editing
     if (isEdit) {
@@ -374,9 +435,18 @@ function ReRxManager() {
 
   // Rx Indicator management
   const handleMetricChange = (metric, value) => {
+    const newValue = Math.min(10, Math.max(0, parseFloat(value) || 0));
     setMetrics(prev => ({
       ...prev,
-      [metric]: Math.min(10, Math.max(0, parseFloat(value) || 0))
+      [metric]: newValue
+    }));
+    return newValue;
+  };
+
+  const handleMetricCommentChange = (metricId, text) => {
+    setMetricComments(prev => ({
+      ...prev,
+      [metricId]: text
     }));
   };
 
@@ -384,6 +454,13 @@ function ReRxManager() {
     setRxIndicators(
       rxIndicators.map(ind => (ind.id === id ? { ...ind, [field]: value } : ind))
     );
+  };
+
+  const handleCommentChange = (indicatorId, text) => {
+    setIndicatorComments(prev => ({
+      ...prev,
+      [indicatorId]: text
+    }));
   };
 
   const handleRxIndicatorNameChange = (id, name) => {
@@ -468,19 +545,24 @@ function ReRxManager() {
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">Regenerative Metrics</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(metrics).map(([key, value]) => (
-                <ReMetricSlider
-                  key={key}
-                  id={key}
-                  label={key}
-                  value={value}
-                  onChange={(e) => handleMetricChange(key, parseFloat(e.target.value))}
-                  min={0.01}
-                  max={10}
-                  step={0.01}
-                  definition={variableDefinitions[key]}
-                />
-              ))}
+              {Object.entries(metrics).map(([key, value]) => {
+                const definition = variableDefinitions[key];
+                return (
+                  <ReMetricInput
+                    key={key}
+                    id={key}
+                    label={key}
+                    value={value}
+                    onChange={(newValue) => handleMetricChange(key, newValue)}
+                    min={0.01}
+                    max={10}
+                    step={0.01}
+                    definition={definition} // Pass the full definition object
+                    comment={metricComments[key] || ''}
+                    onCommentChange={handleMetricCommentChange}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -497,7 +579,14 @@ function ReRxManager() {
             </div>
             <div className="space-y-2 mb-4">
               {rxIndicators.map(ind => (
-                <RxIndicatorInput key={ind.id} indicator={ind} onUpdate={handleRxIndicatorChange} onRemove={removeRxIndicator} />
+                <RxIndicatorInput 
+                  key={ind.id} 
+                  indicator={ind} 
+                  onUpdate={handleRxIndicatorChange} 
+                  onRemove={removeRxIndicator}
+                  comment={indicatorComments[ind.id] || ''}
+                  onCommentChange={handleCommentChange}
+                />
               ))}
             </div>
           </div>
