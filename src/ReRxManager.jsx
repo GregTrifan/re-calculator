@@ -76,6 +76,7 @@ function ReRxManager() {
   const [metrics, setMetrics] = useState(INITIAL_METRICS);
   const [rxIndicators, setRxIndicators] = useState(INITIAL_RX_INDICATORS);
   const [snapshotLabel, setSnapshotLabel] = useState('');
+  const [editingSnapshotId, setEditingSnapshotId] = useState(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showQuadrantChart, setShowQuadrantChart] = useState(true);
 
@@ -206,6 +207,52 @@ function ReRxManager() {
     }
   };
 
+  // Update an existing snapshot
+  const updateSnapshot = () => {
+    if (!editingSnapshotId) return;
+
+    const { reLog } = calculateRe();
+    const { rxScaled } = calculateRx();
+
+    setProjects(prevProjects =>
+      prevProjects.map(proj => {
+        if (proj.id === activeProjectId) {
+          return {
+            ...proj,
+            timePoints: proj.timePoints.map(tp => {
+              if (tp.id === editingSnapshotId) {
+                return {
+                  ...tp,
+                  label: snapshotLabel.trim() || `Snapshot ${new Date().toLocaleString()}`,
+                  metrics: { ...metrics },
+                  rxIndicators: [...rxIndicators],
+                  reLog,
+                  rxScaled,
+                  x: reLog,
+                  y: rxScaled
+                };
+              }
+              return tp;
+            }),
+          };
+        }
+        return proj;
+      })
+    );
+
+    // Reset editing state
+    setEditingSnapshotId(null);
+    setSnapshotLabel('');
+  };
+
+  // Cancel editing and reset form
+  const cancelEdit = () => {
+    setEditingSnapshotId(null);
+    setMetrics(INITIAL_METRICS);
+    setRxIndicators(INITIAL_RX_INDICATORS);
+    setSnapshotLabel('');
+  };
+
   // Snapshot management
   const saveSnapshot = (customLabel = '') => {
     console.log('saveSnapshot called with:', { customLabel, snapshotLabel, activeProjectId });
@@ -278,8 +325,14 @@ function ReRxManager() {
     );
   };
 
+  // Handle edit button click for a snapshot
+  const handleEditSnapshot = (snapshot, e) => {
+    e.stopPropagation(); // Prevent triggering the row click
+    loadSnapshot(snapshot, true);
+  };
+
   // Load a snapshot's data into the UI
-  const loadSnapshot = (snapshot) => {
+  const loadSnapshot = (snapshot, isEdit = false) => {
     if (!snapshot) return;
 
     // Update metrics
@@ -294,6 +347,14 @@ function ReRxManager() {
       Fg: Math.min(10, Math.max(0, snapshot.metrics.Fg || 5)),
       Omega: Math.min(10, Math.max(0, snapshot.metrics.Omega || 5))
     });
+    
+    // Set the snapshot label if we're editing
+    if (isEdit) {
+      setSnapshotLabel(snapshot.label || '');
+      setEditingSnapshotId(snapshot.id);
+    } else {
+      setEditingSnapshotId(null);
+    }
 
     // Update Rx indicators if they exist
     if (snapshot.rxIndicators?.length > 0) {
@@ -461,22 +522,41 @@ function ReRxManager() {
 
             <form onSubmit={(e) => {
               e.preventDefault();
-              saveSnapshot();
+              if (editingSnapshotId) {
+                updateSnapshot();
+              } else {
+                saveSnapshot();
+              }
             }} className="mt-4">
-              <div className="flex space-x-2">
+              <div className="flex flex-col space-y-2">
                 <input
                   type="text"
                   value={snapshotLabel}
                   onChange={(e) => setSnapshotLabel(e.target.value)}
-                  placeholder="Enter a label (optional)"
+                  placeholder={editingSnapshotId ? "Edit snapshot label" : "Enter a label (optional)"}
                   className="flex-1 p-2 border rounded placeholder:opacity-50 placeholder:text-gray-600"
                 />
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                >
-                  Save Snapshot
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    type="submit"
+                    className={`flex-1 py-2 px-4 rounded transition-colors ${
+                      editingSnapshotId 
+                        ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {editingSnapshotId ? 'Update Snapshot' : 'Save New Snapshot'}
+                  </button>
+                  {editingSnapshotId && (
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             </form>
           </div>
@@ -489,16 +569,35 @@ function ReRxManager() {
                 {[...snapshots].reverse().map((snapshot) => (
                   <div
                     key={snapshot.id}
-                    className="p-3 border rounded hover:bg-gray-50 cursor-pointer flex justify-between items-center"
+                    className="p-3 border rounded hover:bg-gray-50 cursor-pointer"
                     onClick={() => loadSnapshot(snapshot)}
                   >
-                    <div>
-                      <p className="font-medium">{snapshot.label}</p>
-                      <p className="text-sm text-gray-500">{formatDate(snapshot.timestamp)}</p>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{snapshot.label}</p>
+                        <p className="text-sm text-gray-500">{formatDate(snapshot.timestamp)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm">Re: {snapshot.reLog?.toFixed(2) || 'N/A'}</p>
+                        <p className="text-sm">Rx: {snapshot.rxScaled?.toFixed(2) || 'N/A'}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm">Re: {snapshot.reLog?.toFixed(2) || 'N/A'}</p>
-                      <p className="text-sm">Rx: {snapshot.rxScaled?.toFixed(2) || 'N/A'}</p>
+                    <div className="flex justify-end space-x-2 mt-2">
+                      <button
+                        onClick={(e) => handleEditSnapshot(snapshot, e)}
+                        className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSnapshot(snapshot.id);
+                        }}
+                        className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -507,9 +606,11 @@ function ReRxManager() {
               <p className="text-gray-500 text-center py-4">No snapshots yet. Adjust metrics and click 'Save Snapshot' to create one.</p>
             )}
           </div>
-
+        </div>
+      </main>
+      <div className="flex flex-row justify-between gap-2 mt-4">
           {/* Temporal Evolution Chart */}
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white p-6 rounded-lg shadow flex-1 min-w-[60vw] my-auto">
             <h2 className="text-xl font-semibold mb-4">Temporal Evolution</h2>
             <TemporalEvolutionChart data={snapshots} />
           </div>
@@ -525,8 +626,7 @@ function ReRxManager() {
               onPointClick={loadSnapshot}
             />
           )}
-        </div>
-      </main>
+      </div>
 
       {/* Project Manager Modal */}
       {showProjectManager && (

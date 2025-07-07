@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   ScatterChart, 
   Scatter, 
@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 // Using Recharts' built-in Tooltip
 
-const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
+const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
   // Define quadrants with labels and descriptions
   const quadrants = [
     { 
@@ -60,19 +60,70 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
     },
   ];
 
-  // Add current point to the data if provided
-  const chartData = [...data];
-  if (currentPoint) {
-    chartData.push({ ...currentPoint, isCurrent: true });
-  }
+  // Generate unique colors for each snapshot
+  const snapshotColors = useMemo(() => {
+    const colors = {};
+    snapshots.forEach(snapshot => {
+      // Generate a random but consistent color for each snapshot ID
+      colors[snapshot.id] = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+    });
+    return colors;
+  }, [snapshots]);
+
+  // Prepare chart data from snapshots and current point
+  const chartData = useMemo(() => {
+    console.log('Snapshots received:', snapshots);
+    console.log('Current point:', currentPoint);
+    
+    // Map snapshots to chart data format
+    const snapshotPoints = snapshots.map(snapshot => {
+      const point = {
+        ...snapshot,
+        x: snapshot.reLog || 0,
+        y: snapshot.rxScaled || 0,
+        id: snapshot.id || `snap-${Math.random().toString(36).substr(2, 9)}`,
+        label: snapshot.label || 'Snapshot',
+        timestamp: snapshot.timestamp || new Date().toISOString(),
+        isCurrent: false
+      };
+      console.log('Mapped snapshot point:', point);
+      return point;
+    });
+    
+    // Add current point if provided
+    if (currentPoint) {
+      const current = {
+        ...currentPoint,
+        x: currentPoint.x || 0,
+        y: currentPoint.y || 0,
+        id: 'current',
+        label: 'Current',
+        isCurrent: true
+      };
+      console.log('Current point:', current);
+      snapshotPoints.push(current);
+    }
+    
+    console.log('Final chart data:', snapshotPoints);
+    return snapshotPoints;
+  }, [snapshots, currentPoint]);
+
+  // Format date to DD/MM/YYYY
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB'); // This will format as DD/MM/YYYY
+  };
 
   // Custom dot component for better interactivity
   const renderDot = (props) => {
     const { cx, cy, payload, isCurrent } = props;
+    
+    // Current point (black with NOW label)
     if (isCurrent) {
       return (
         <g>
-          <circle cx={cx} cy={cy} r={8} fill="#ef4444" stroke="#b91c1c" strokeWidth={2} />
+          <circle cx={cx} cy={cy} r={8} fill="#000000" stroke="#000000" strokeWidth={2} />
           <text 
             x={cx} 
             y={cy} 
@@ -88,19 +139,23 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
       );
     }
     
+    // Snapshot points with unique colors
+    const pointColor = snapshotColors[payload.id] || '#3b82f6';
+    const strokeColor = `#${Math.min(parseInt(pointColor.slice(1), 16) - 0x222222).toString(16).padStart(6, '0')}`;
+    
     return (
       <g>
         <circle 
           cx={cx} 
           cy={cy} 
           r={6} 
-          fill="#3b82f6" 
-          stroke="#1d4ed8" 
+          fill={pointColor}
+          stroke={strokeColor}
           strokeWidth={1}
           style={{ cursor: 'pointer' }}
           onClick={() => onPointClick && onPointClick(payload)}
         />
-        {payload?.label && (
+        {payload?.timestamp && (
           <text 
             x={cx} 
             y={cy - 10} 
@@ -108,7 +163,7 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
             fontSize={10} 
             fill="#4b5563"
           >
-            {payload.label}
+            {formatDate(payload.timestamp)}
           </text>
         )}
       </g>
@@ -203,8 +258,9 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
         </p>
       </div>
       
-      <div className="h-[500px]">
-      <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full" style={{ paddingBottom: '100%', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
           margin={{ top: 10, right: 10, bottom: 40, left: 40 }}
         >
@@ -274,25 +330,34 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
           
           {/* Quadrant labels removed as requested */}
           
-          {/* Data points */}
-          <Scatter
-            name="Snapshots"
-            data={chartData.filter(d => !d.isCurrent)}
-            shape={renderDot}
-          >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={entry.isCurrent ? '#ef4444' : '#3b82f6'}
-              />
-            ))}
-          </Scatter>
+          {/* Data points - snapshots */}
+          {snapshots.length > 0 && (
+            <Scatter
+              name="Snapshots"
+              data={chartData.filter(d => !d.isCurrent)}
+              shape={renderDot}
+            >
+              {chartData
+                .filter(entry => !entry.isCurrent)
+                .map((entry, index) => (
+                  <Cell
+                    key={`cell-${entry.id || index}`}
+                    fill={snapshotColors[entry.id] || '#3b82f6'}
+                  />
+                ))}
+            </Scatter>
+          )}
           
           {/* Current point */}
           {currentPoint && (
             <Scatter
               name="Current State"
-              data={[currentPoint]}
+              data={[{
+                ...currentPoint,
+                x: currentPoint.x || 0,
+                y: currentPoint.y || 0,
+                isCurrent: true
+              }]}
               shape={renderDot}
               isAnimationActive={false}
             />
@@ -309,7 +374,8 @@ const QuadrantChart = ({ data = [], currentPoint, onPointClick }) => {
             }}
           />
         </ScatterChart>
-      </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </div>
       
       <div className="mt-2 text-xs text-gray-400 text-center">
