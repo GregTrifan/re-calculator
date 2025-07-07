@@ -111,6 +111,7 @@ function ReRxManager() {
   const [editingSnapshotId, setEditingSnapshotId] = useState(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showQuadrantChart, setShowQuadrantChart] = useState(true);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   // Active project data
   const activeProject = useMemo(() =>
@@ -531,7 +532,13 @@ function ReRxManager() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50 p-4 md:pt-12 md:px-8">
+      <div 
+        className="bg-blue-600 text-white text-center py-2 px-4 mb-4 -mx-4 md:-mx-8 md:mb-8 cursor-pointer hover:bg-blue-700 transition-colors"
+        onClick={() => setShowQRCode(true)}
+      >
+        <p className="text-sm">Licensed under Creative Commons BY-NC-ND 4.0. You may share this work with proper attribution, but you may not adapt, remix, or build upon it, and you may not use it for commercial purposes.</p>
+      </div>
       <header className="mb-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
@@ -768,6 +775,29 @@ function ReRxManager() {
                 onDeleteProject={deleteProject}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowQRCode(false)}
+        >
+          <div className="relative max-w-full max-h-full" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setShowQRCode(false)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300"
+              aria-label="Close QR code"
+            >
+              <XIcon className="w-6 h-6" />
+            </button>
+            <img 
+              src="/qr-ribbon.jpg" 
+              alt="QR Code" 
+              className="max-h-[80vh] max-w-full object-contain"
+            />
           </div>
         </div>
       )}
