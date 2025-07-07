@@ -91,15 +91,15 @@ function ReRxManager() {
       ...acc,
       [key]: 0.01
     }), {});
-    
+
+    // Reset all state variables
     setMetrics(resetMetrics);
-    setRxIndicators(INITIAL_RX_INDICATORS);
+    setRxIndicators([{ id: 1, name: '', value: 0.01 }]);
     setSnapshotLabel('');
+    setSnapshotDate(new Date().toISOString().split('T')[0]);
     setIndicatorComments({});
-    setMetricComments(INITIAL_METRIC_COMMENTS);
+    setMetricComments({ ...INITIAL_METRIC_COMMENTS });
     setEditingSnapshotId(null);
-    
-    console.log('Form state reset with metrics at 0.01');
   }, []);
 
   const [activeProjectId, setActiveProjectId] = useState(null);
@@ -108,6 +108,7 @@ function ReRxManager() {
   const [indicatorComments, setIndicatorComments] = useState({});
   const [metricComments, setMetricComments] = useState(INITIAL_METRIC_COMMENTS);
   const [snapshotLabel, setSnapshotLabel] = useState('');
+  const [snapshotDate, setSnapshotDate] = useState(new Date().toISOString().split('T')[0]);
   const [editingSnapshotId, setEditingSnapshotId] = useState(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showQuadrantChart, setShowQuadrantChart] = useState(true);
@@ -262,6 +263,10 @@ function ReRxManager() {
     // Store metric comments separately in the snapshot
     const snapshotMetricComments = { ...metricComments };
 
+    // Create timestamp from the selected date (set to noon to be consistent)
+    const selectedDate = new Date(snapshotDate);
+    selectedDate.setHours(12, 0, 0, 0);
+
     setProjects(prevProjects =>
       prevProjects.map(proj => {
         if (proj.id === activeProjectId) {
@@ -271,10 +276,11 @@ function ReRxManager() {
               if (tp.id === editingSnapshotId) {
                 return {
                   ...tp,
-                  label: snapshotLabel.trim() || `Snapshot ${new Date().toLocaleString()}`,
+                  label: snapshotLabel.trim() || `Snapshot ${new Date(selectedDate).toLocaleString()}`,
                   metrics: metricsWithComments,
                   metricComments: snapshotMetricComments,
                   rxIndicators: indicatorsWithComments,
+                  timestamp: selectedDate.toISOString(),
                   reLog,
                   rxScaled,
                   x: reLog,
@@ -292,6 +298,7 @@ function ReRxManager() {
     // Reset editing state
     setEditingSnapshotId(null);
     setSnapshotLabel('');
+    setSnapshotDate(new Date().toISOString().split('T')[0]);
     setIndicatorComments({});
     resetFormState();
   };
@@ -316,26 +323,44 @@ function ReRxManager() {
       comment: indicatorComments[indicator.id] || ''
     }));
 
-    const label = customLabel || (snapshotLabel.trim() !== '' ? snapshotLabel : `Snapshot ${new Date().toLocaleString()}`);
+    // Format date as DD/MM/YYYY for the default label
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const label = customLabel || (snapshotLabel.trim() !== '' ? snapshotLabel : `Snapshot ${formatDate(snapshotDate)}`);
     console.log('Using label:', label);
 
     // Calculate values first
     const { reLog } = calculateRe();
     const { rxScaled } = calculateRx();
 
+    // Prepare metrics with their comments for saving
+    const metricsWithComments = Object.keys(metrics).reduce((acc, key) => ({
+      ...acc,
+      [key]: metrics[key] // Keep just the value for now to maintain backward compatibility
+    }), {});
+
+    // Store metric comments separately in the snapshot
+    const snapshotMetricComments = { ...metricComments };
+
+    // Create timestamp from the selected date (set to noon to be consistent)
+    const selectedDate = new Date(snapshotDate);
+    selectedDate.setHours(12, 0, 0, 0);
+
     const newSnapshot = {
-      id: Date.now().toString(),
-      label: label.trim(),
-      timestamp: new Date().toISOString(),
-      metrics: Object.keys(metrics).reduce((acc, key) => ({
-        ...acc,
-        [key]: metrics[key] // Keep just the value for now to maintain backward compatibility
-      }), {}),
-      metricComments: { ...metricComments },
+      id: `snapshot-${Date.now()}`,
+      label: label,
+      metrics: metricsWithComments,
+      metricComments: snapshotMetricComments,
       rxIndicators: indicatorsWithComments,
+      timestamp: selectedDate.toISOString(),
       reLog,
       rxScaled,
-      // Add coordinates for quadrant chart using the calculated values
       x: reLog,
       y: rxScaled
     };
@@ -403,6 +428,13 @@ function ReRxManager() {
       Fg: Math.min(10, Math.max(0, snapshot.metrics?.Fg || 5)),
       Omega: Math.min(10, Math.max(0, snapshot.metrics?.Omega || 5))
     });
+
+    // Set the snapshot date if we're editing
+    if (isEdit && snapshot.timestamp) {
+      const date = new Date(snapshot.timestamp);
+      const dateString = date.toISOString().split('T')[0];
+      setSnapshotDate(dateString);
+    }
 
     // Load metric comments if they exist
     if (snapshot.metricComments) {
@@ -645,31 +677,60 @@ function ReRxManager() {
               } else {
                 saveSnapshot();
               }
-            }} className="mt-4">
-              <div className="flex flex-col space-y-2">
-                <input
-                  type="text"
-                  value={snapshotLabel}
-                  onChange={(e) => setSnapshotLabel(e.target.value)}
-                  placeholder={editingSnapshotId ? "Edit snapshot label" : "Enter a label (optional)"}
-                  className="flex-1 p-2 border rounded placeholder:opacity-50 placeholder:text-gray-600"
-                />
-                <div className="flex space-x-2">
+            }} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">
+                {editingSnapshotId ? 'Edit Snapshot' : 'Create New Snapshot'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Label
+                  </label>
+                  <input
+                    type="text"
+                    value={snapshotLabel}
+                    onChange={(e) => setSnapshotLabel(e.target.value)}
+                    placeholder="e.g., Project Milestone, Monthly Check-in"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={snapshotDate}
+                      onChange={(e) => setSnapshotDate(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-3 pt-2">
                   <button
                     type="submit"
-                    className={`flex-1 py-2 px-4 rounded transition-colors ${
+                    className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
                       editingSnapshotId 
-                        ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        ? 'bg-yellow-600 hover:bg-yellow-700 text-white shadow-sm hover:shadow-md'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md'
                     }`}
                   >
-                    {editingSnapshotId ? 'Update Snapshot' : 'Save New Snapshot'}
+                    {editingSnapshotId ? 'Update Snapshot' : 'Save Snapshot'}
                   </button>
                   {editingSnapshotId && (
                     <button
                       type="button"
                       onClick={cancelEdit}
-                      className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all hover:shadow-sm"
                     >
                       Cancel
                     </button>
