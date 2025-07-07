@@ -36,8 +36,8 @@ const INITIAL_METRIC_COMMENTS = {
 };
 
 const INITIAL_RX_INDICATORS = [
-  { id: 1, name: 'Example: Soil Organic Matter (%)', value: 6 },
-  { id: 2, name: 'Example: Employee Turnover Rate (Inverse)', value: 8 },
+  { id: 1, name: 'Example: Soil Organic Matter (%)', value: 0.01 },
+  { id: 2, name: 'Example: Employee Turnover Rate (Inverse)', value: 0.01 },
 ];
 
 // Variable Definitions
@@ -83,6 +83,24 @@ function ReRxManager() {
       return [];
     }
   });
+  
+  // Reset all form fields to their initial state with metrics at 0.01
+  const resetFormState = useCallback(() => {
+    // Create a new metrics object with all values set to 0.01
+    const resetMetrics = Object.keys(INITIAL_METRICS).reduce((acc, key) => ({
+      ...acc,
+      [key]: 0.01
+    }), {});
+    
+    setMetrics(resetMetrics);
+    setRxIndicators(INITIAL_RX_INDICATORS);
+    setSnapshotLabel('');
+    setIndicatorComments({});
+    setMetricComments(INITIAL_METRIC_COMMENTS);
+    setEditingSnapshotId(null);
+    
+    console.log('Form state reset with metrics at 0.01');
+  }, []);
 
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [metrics, setMetrics] = useState(INITIAL_METRICS);
@@ -274,16 +292,12 @@ function ReRxManager() {
     setEditingSnapshotId(null);
     setSnapshotLabel('');
     setIndicatorComments({});
+    resetFormState();
   };
 
   // Cancel editing and reset form
   const cancelEdit = () => {
-    setEditingSnapshotId(null);
-    setMetrics(INITIAL_METRICS);
-    setRxIndicators(INITIAL_RX_INDICATORS);
-    setIndicatorComments({});
-    setMetricComments(INITIAL_METRIC_COMMENTS);
-    setSnapshotLabel('');
+    resetFormState();
   };
 
   // Snapshot management
@@ -347,9 +361,9 @@ function ReRxManager() {
       return updated;
     });
 
-    // Reset the snapshot label
-    setSnapshotLabel('');
-    console.log('Snapshot label cleared');
+    // Reset the form state including all metrics, indicators, and comments
+    resetFormState();
+    console.log('Form reset after saving snapshot');
   };
 
   const deleteSnapshot = (snapshotId) => {
@@ -424,7 +438,7 @@ function ReRxManager() {
         snapshot.rxIndicators.map(ind => ({
           id: ind.id,
           name: ind.name || `Indicator ${ind.id}`,
-          value: Math.min(10, Math.max(0, ind.value || 5))
+          value: Math.min(10, Math.max(0.01, ind.value || 0.01))
         }))
       );
     }
@@ -475,7 +489,7 @@ function ReRxManager() {
 
   const addRxIndicator = () => {
     const newId = rxIndicators.length > 0 ? Math.max(...rxIndicators.map(i => i.id)) + 1 : 1;
-    setRxIndicators([...rxIndicators, { id: newId, name: '', value: 0.5 }]);
+    setRxIndicators([...rxIndicators, { id: newId, name: '', value: 0.01 }]);
   };
 
   const removeRxIndicator = (id) => {
@@ -520,7 +534,14 @@ function ReRxManager() {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <header className="mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Regenerative Ratio Dashboard</h1>
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/logo-d.png" 
+              alt="Logo" 
+              className="h-10 w-10 md:h-12 md:w-12 object-contain"
+            />
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Regenerative Ratio Dashboard</h1>
+          </div>
           <div className="flex space-x-2">
             <button
               onClick={toggleProjectManager}
@@ -604,7 +625,7 @@ function ReRxManager() {
                 <p className="text-sm text-gray-500">Re raw: {reRaw.toFixed(2)}</p>
               </div>
               <div className="bg-green-50 p-4 rounded">
-                <h3 className="text-sm font-medium text-gray-600">Realized Regeneration Index (Rx)</h3>
+                <h3 className="text-sm font-medium text-gray-600">Realized Regeneration (Rx)</h3>
                 <p className="text-2xl font-bold">Rx scaled: {rxScaled.toFixed(2)}</p>
                 <p className="text-sm text-gray-500">Rx raw: {rx.toFixed(2)}</p>
               </div>

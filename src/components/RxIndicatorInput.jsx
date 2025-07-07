@@ -9,6 +9,13 @@ const RxIndicatorInput = ({
   onCommentChange 
 }) => {
   const [showComment, setShowComment] = useState(false);
+  
+  // Ensure value is within bounds
+  const boundedValue = Math.min(10, Math.max(0.01, indicator.value));
+  if (boundedValue !== indicator.value) {
+    // If value is out of bounds, update it
+    setTimeout(() => onUpdate(indicator.id, 'value', boundedValue), 0);
+  }
     return (
         <div className="flex items-center space-x-4 mb-3 p-3 bg-gray-50 rounded-lg border">
             <div className="flex-1 space-y-2">
@@ -42,7 +49,7 @@ const RxIndicatorInput = ({
             <div className="flex items-center space-x-4 w-1/2">
                 <input
                     type="range"
-                    value={indicator.value}
+                    value={boundedValue}
                     onChange={(e) => onUpdate(indicator.id, 'value', parseFloat(e.target.value))}
                     min="0.01"
                     max="10"
@@ -51,7 +58,7 @@ const RxIndicatorInput = ({
                 />
                 <input
                     type="number"
-                    value={indicator.value}
+                    value={boundedValue}
                     onChange={(e) => onUpdate(indicator.id, 'value', parseFloat(e.target.value))}
                     min="0.01"
                     max="10"

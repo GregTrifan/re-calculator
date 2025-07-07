@@ -4,21 +4,12 @@ import { InfoIcon } from './Icons';
 
 const ReMetricInput = ({ id, label, value, min, max, step, definition, onChange, comment = '', onCommentChange }) => {
   const [showComment, setShowComment] = useState(false);
-  const [localValue, setLocalValue] = useState(value);
 
   const handleChange = (e) => {
     const newValue = parseFloat(e.target.value);
-    setLocalValue(newValue);
-    onChange(newValue);
-  };
-
-  const handleBlur = () => {
     // Ensure value stays within bounds
-    const clampedValue = Math.min(max, Math.max(min, localValue));
-    if (clampedValue !== localValue) {
-      setLocalValue(clampedValue);
-      onChange(clampedValue);
-    }
+    const boundedValue = Math.min(max, Math.max(min, newValue));
+    onChange(boundedValue);
   };
 
   return (
@@ -59,9 +50,8 @@ const ReMetricInput = ({ id, label, value, min, max, step, definition, onChange,
           min={min}
           max={max}
           step={step}
-          value={localValue}
+          value={value}
           onChange={handleChange}
-          onBlur={handleBlur}
           className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
         <input
@@ -69,9 +59,8 @@ const ReMetricInput = ({ id, label, value, min, max, step, definition, onChange,
           min={min}
           max={max}
           step={step}
-          value={localValue}
+          value={value}
           onChange={handleChange}
-          onBlur={handleBlur}
           className="w-16 p-1 border rounded text-center text-sm"
         />
       </div>
