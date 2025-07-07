@@ -565,38 +565,59 @@ function ReRxManager() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:pt-12 md:px-8">
+      {/* License Banner */}
       <div 
-        className="bg-blue-600 text-white text-center py-2 px-4 mb-4 -mx-4 md:-mx-8 md:mb-8 cursor-pointer hover:bg-blue-700 transition-colors"
+        className="bg-blue-600 text-white text-center py-2 px-4 -mx-4 md:-mx-8 mb-6 md:mb-8 cursor-pointer hover:bg-blue-700 transition-colors"
         onClick={() => setShowQRCode(true)}
       >
-        <p className="text-sm">Licensed under Creative Commons BY-NC-ND 4.0. You may share this work with proper attribution, but you may not adapt, remix, or build upon it, and you may not use it for commercial purposes.</p>
+        <p className="text-xs md:text-sm">
+          Licensed under Creative Commons BY-NC-ND 4.0. You may share this work with proper attribution, but you may not adapt, remix, or build upon it, and you may not use it for commercial purposes.
+        </p>
       </div>
-      <header className="mb-6">
-        <div className="flex justify-between items-center">
+
+      {/* Main Header */}
+      <header className="mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Logo and Title */}
           <div className="flex items-center space-x-3">
             <img 
               src="/logo-d.png" 
               alt="Logo" 
-              className="h-10 w-10 md:h-12 md:w-12 object-contain"
+              className="h-10 w-10 md:h-12 md:w-12 flex-shrink-0 object-contain"
             />
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Regenerative Ratio Dashboard</h1>
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 leading-tight">
+                Regenerative Ratio Dashboard
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">
+                A dual diagnostic lens for system regeneration
+              </p>
+            </div>
           </div>
-          <div className="flex space-x-2">
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2 sm:flex-nowrap">
             <button
               onClick={toggleProjectManager}
-              className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200 transition-colors"
+              className="flex-1 sm:flex-none px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-100"
             >
               {showProjectManager ? 'Hide Projects' : 'Manage Projects'}
             </button>
             <button
               onClick={toggleQuadrantChart}
-              className="px-3 py-1.5 bg-green-100 text-green-700 rounded-md text-sm font-medium hover:bg-green-200 transition-colors"
+              className="flex-1 sm:flex-none px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors border border-green-100"
             >
               {showQuadrantChart ? 'Hide Quadrant' : 'Show Quadrant'}
             </button>
           </div>
         </div>
-        <p className="text-gray-600">Re/Rx is a dual diagnostic lens that reveals a system’s regenerative capacity (Re) and its real-world outcomes (Rx)</p>
+
+        {/* Description */}
+        <div className="bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-100">
+          <p className="text-sm text-gray-700 leading-relaxed">
+            <span className="font-medium">Re/Rx</span> is a dual diagnostic lens that reveals a system's <span className="font-medium">regenerative capacity (Re)</span> and its <span className="font-medium">real-world outcomes (Rx)</span>. Use this dashboard to track and analyze the health and performance of your regenerative systems.
+          </p>
+        </div>
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -627,27 +648,33 @@ function ReRxManager() {
           </div>
 
           {/* Rx Indicators */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Realized Regeneration (Rx) Indicators</h2>
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Realized Regeneration (Rx) Indicators</h2>
               <button
                 onClick={addRxIndicator}
-                className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                className="flex items-center justify-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors w-full sm:w-auto"
               >
-                <PlusIcon className="w-4 h-4 mr-1" /> Add Indicator
+                <PlusIcon className="w-4 h-4 mr-1.5" /> Add Custom Indicator
               </button>
             </div>
-            <div className="space-y-2 mb-4">
-              {rxIndicators.map(ind => (
-                <RxIndicatorInput 
-                  key={ind.id} 
-                  indicator={ind} 
-                  onUpdate={handleRxIndicatorChange} 
-                  onRemove={removeRxIndicator}
-                  comment={indicatorComments[ind.id] || ''}
-                  onCommentChange={handleCommentChange}
-                />
-              ))}
+            <div className="space-y-3">
+              {rxIndicators.length === 0 ? (
+                <div className="text-center py-6 px-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                  <p className="text-gray-500 text-sm">No indicators added yet. Click 'Add Custom Indicator' to get started.</p>
+                </div>
+              ) : (
+                rxIndicators.map(ind => (
+                  <RxIndicatorInput 
+                    key={ind.id} 
+                    indicator={ind} 
+                    onUpdate={handleRxIndicatorChange} 
+                    onRemove={removeRxIndicator}
+                    comment={indicatorComments[ind.id] || ''}
+                    onCommentChange={handleCommentChange}
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
