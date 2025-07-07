@@ -21,43 +21,43 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
   const quadrants = [
     { 
       id: 'degenerative',
-      x: [0, 2.5], 
-      y: [0, 2.5], 
+      x: [0, 2.751], 
+      y: [0, 2.751], 
       fill: 'rgba(239, 68, 68, 0.05)', 
       color: 'rgba(239, 68, 68, 0.9)',
       label: 'Degenerative',
       description: 'Low Regenerative Capacity, Low Realized Regeneration',
-      textPosition: { x: 1.25, y: 1.25 }
+      textPosition: { x: 1.3755, y: 1.3755 }
     },
     { 
       id: 'latent',
-      x: [2.5, 5], 
-      y: [0, 2.5], 
+      x: [2.751, 5.52], 
+      y: [0, 2.751], 
       fill: 'rgba(59, 130, 246, 0.05)', 
       color: 'rgba(59, 130, 246, 0.9)',
       label: 'Latent Potential',
       description: 'High Regenerative Capacity, Low Realized Regeneration',
-      textPosition: { x: 3.75, y: 1.25 }
+      textPosition: { x: 4.1355, y: 1.3755 }
     },
     { 
       id: 'unsustainable',
-      x: [0, 2.5], 
-      y: [2.5, 5], 
+      x: [0, 2.751], 
+      y: [2.751, 5.52], 
       fill: 'rgba(245, 158, 11, 0.05)', 
       color: 'rgba(245, 158, 11, 0.9)',
       label: 'Unsustainable',
       description: 'Low Regenerative Capacity, High Realized Regeneration',
-      textPosition: { x: 1.25, y: 3.75 }
+      textPosition: { x: 1.3755, y: 4.1355 }
     },
     { 
       id: 'thriving',
-      x: [2.5, 5], 
-      y: [2.5, 5], 
+      x: [2.751, 5.52], 
+      y: [2.751, 5.52], 
       fill: 'rgba(16, 185, 129, 0.05)', 
       color: 'rgba(16, 185, 129, 0.9)',
       label: 'Thriving System',
       description: 'High Regenerative Capacity, High Realized Regeneration',
-      textPosition: { x: 3.75, y: 3.75 }
+      textPosition: { x: 4.1355, y: 4.1355 }
     },
   ];
 
@@ -245,7 +245,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
 
   const currentQuadrant = currentPoint ? getQuadrant(currentPoint) : null;
 
-  const ticks = [0, 1, 2, 3, 4, 5];
+  const ticks = [0, 1, 2, 2.751, 3, 4, 5, 5.52];
 
   return (
     <div className="w-full bg-white rounded-lg shadow-sm border border-gray-100 p-4">
@@ -270,7 +270,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
           <XAxis 
             type="number" 
             dataKey="x" 
-            domain={[0, 5]}
+            domain={[0, 5.52]}
             ticks={ticks}
             tick={{ fontSize: 12 }}
             tickLine={{ stroke: '#9ca3af' }}
@@ -288,7 +288,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
           <YAxis 
             type="number" 
             dataKey="y" 
-            domain={[0, 5]}
+            domain={[0, 5.52]}
             ticks={ticks}
             tick={{ fontSize: 12 }}
             tickLine={{ stroke: '#9ca3af' }}
@@ -302,17 +302,13 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
             />
           </YAxis>
           
-          {/* Reference lines */}
-          <ReferenceLine 
-            x={2.5} 
-            stroke="#6b7280" 
-            strokeWidth={1.5}
-          />
-          <ReferenceLine 
-            y={2.5} 
-            stroke="#6b7280" 
-            strokeWidth={1.5}
-          />
+          {/* Reference Lines */}
+          <ReferenceLine x={2.751} stroke="#6b7280" strokeDasharray="3 3" strokeWidth={1.5}>
+            <Label value="2.75" position="insideBottom" offset={15} fill="#6b7280" fontSize={12} />
+          </ReferenceLine>
+          <ReferenceLine y={2.751} stroke="#6b7280" strokeDasharray="3 3" strokeWidth={1.5}>
+            <Label value="2.75" position="insideLeft" offset={10} fill="#6b7280" fontSize={12} />
+          </ReferenceLine>
           
           {/* Quadrant backgrounds */}
           {quadrants.map((quadrant, index) => (
