@@ -730,7 +730,7 @@ function ReRxManager() {
           </div>
         </div>
       </main>
-      <div className="flex flex-row justify-between gap-2 mt-4">
+      <div className="flex flex-col-reverse xl:flex-row justify-between gap-2 mt-4">
           {/* Temporal Evolution Chart */}
           <div className="bg-white p-6 rounded-lg shadow flex-1 min-w-[60vw] my-auto">
             <h2 className="text-xl font-semibold mb-4">Temporal Evolution</h2>
