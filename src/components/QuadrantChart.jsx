@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { generateColorFromId } from '../utils/colorUtils';
 import { 
   ScatterChart, 
   Scatter, 
@@ -60,12 +61,11 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
     },
   ];
 
-  // Generate unique colors for each snapshot
+  // Generate consistent colors for each snapshot
   const snapshotColors = useMemo(() => {
     const colors = {};
     snapshots.forEach(snapshot => {
-      // Generate a random but consistent color for each snapshot ID
-      colors[snapshot.id] = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+      colors[snapshot.id] = generateColorFromId(snapshot.id);
     });
     return colors;
   }, [snapshots]);

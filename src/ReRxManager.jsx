@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer, Scatter, ScatterChart } from 'recharts';
+import { generateColorFromId, getLightBackgroundColor } from './utils/colorUtils';
 
 // Components
 import ProjectManager from './components/ProjectManager';
@@ -569,8 +570,12 @@ function ReRxManager() {
                 {[...snapshots].reverse().map((snapshot) => (
                   <div
                     key={snapshot.id}
-                    className="p-3 border rounded hover:bg-gray-50 cursor-pointer"
+                    className="p-3 border rounded hover:shadow-md cursor-pointer transition-shadow"
                     onClick={() => loadSnapshot(snapshot)}
+                    style={{
+                      backgroundColor: getLightBackgroundColor(generateColorFromId(snapshot.id), 0.2),
+                      borderColor: generateColorFromId(snapshot.id)
+                    }}
                   >
                     <div className="flex justify-between items-center">
                       <div>
