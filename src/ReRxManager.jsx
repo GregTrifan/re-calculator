@@ -603,12 +603,17 @@ function ReRxManager() {
             >
               {showProjectManager ? 'Hide Projects' : 'Manage Projects'}
             </button>
+            {/*
             <button
               onClick={toggleQuadrantChart}
               className="flex-1 sm:flex-none px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors border border-green-100"
             >
               {showQuadrantChart ? 'Hide Quadrant' : 'Show Quadrant'}
             </button>
+            */}
+            <a href="https://docs.google.com/document/d/129K7wkojOXs2pjxlLWCisI21eKzQGhLt/edit#heading=h.gmmhipqfkea" target="_blank" className="flex-1 sm:flex-none px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors border border-green-100">
+            Read the Science
+            </a>
           </div>
         </div>
 

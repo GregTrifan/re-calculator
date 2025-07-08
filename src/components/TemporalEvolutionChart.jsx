@@ -70,7 +70,14 @@ const TemporalEvolutionChart = ({ data = [] }) => {
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
             }}
             formatter={(value, name) => [value.toFixed(2), name]}
-            labelFormatter={(label) => `Time Point: ${label}`}
+            labelFormatter={(label) => {
+              if (!label) return 'Time Point: N/A';
+              const date = new Date(label);
+              const day = String(date.getDate()).padStart(2, '0');
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const year = date.getFullYear();
+              return `Time Point: ${day}/${month}/${year}`;
+            }}
           />
           
           {/* Legend */}
