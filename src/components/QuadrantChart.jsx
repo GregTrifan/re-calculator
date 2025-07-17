@@ -18,6 +18,56 @@ import {
 // Using Recharts' built-in Tooltip
 
 const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
+  // Modular forecasting function using vector extrapolation
+  const calculateForecast = (snapshots) => {
+    if (snapshots.length < 2) return null;
+    
+    // Get the last two snapshots sorted by timestamp
+    const sortedSnapshots = snapshots
+      .filter(snapshot => snapshot.timestamp)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    if (sortedSnapshots.length < 2) return null;
+    
+    const lastPoint = {
+      x: sortedSnapshots[sortedSnapshots.length - 1].reLog || 0,
+      y: sortedSnapshots[sortedSnapshots.length - 1].rxScaled || 0
+    };
+    
+    const secondLastPoint = {
+      x: sortedSnapshots[sortedSnapshots.length - 2].reLog || 0,
+      y: sortedSnapshots[sortedSnapshots.length - 2].rxScaled || 0
+    };
+    
+    // Calculate vector from second-last to last point
+    const vector = {
+      x: lastPoint.x - secondLastPoint.x,
+      y: lastPoint.y - secondLastPoint.y
+    };
+    
+    // Extrapolate to get forecast point
+    const forecastPoint = {
+      x: lastPoint.x + vector.x,
+      y: lastPoint.y + vector.y,
+      id: 'forecast',
+      label: 'Forecast',
+      isForecast: true,
+      timestamp: null // No timestamp for forecast
+    };
+    
+    // Ensure forecast stays within chart bounds
+    forecastPoint.x = Math.max(0, Math.min(5.52, forecastPoint.x));
+    forecastPoint.y = Math.max(0, Math.min(5.52, forecastPoint.y));
+    
+    return {
+      point: forecastPoint,
+      lastPoint: lastPoint
+    };
+  };
+
+  // Calculate forecast
+  const forecast = useMemo(() => calculateForecast(snapshots), [snapshots]);
+
   // Define quadrants with labels and descriptions
   const quadrants = [
     { 
@@ -130,7 +180,35 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
 
   // Custom dot component for better interactivity
   const renderDot = (props) => {
-    const { cx, cy, payload, isCurrent } = props;
+    const { cx, cy, payload, isCurrent, isForecast } = props;
+    
+    // Forecast point (purple with dashed border)
+    if (isForecast || payload?.isForecast) {
+      return (
+        <g>
+          <circle 
+            cx={cx} 
+            cy={cy} 
+            r={6} 
+            fill="#8b5cf6"
+            stroke="#8b5cf6"
+            strokeWidth={2}
+            strokeDasharray="3 3"
+            opacity={0.8}
+          />
+          <text 
+            x={cx + 12} 
+            y={cy + 3} 
+            textAnchor="start" 
+            fontSize={10} 
+            fill="#8b5cf6"
+            fontWeight="bold"
+          >
+            Forecast
+          </text>
+        </g>
+      );
+    }
     
     // Current point (black with NOW label)
     if (isCurrent) {
@@ -189,6 +267,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
 
     const data = payload[0].payload;
     const isCurrent = data.isCurrent;
+    const isForecast = data.isForecast;
     const quadrant = getQuadrant(data);
     
     return (
@@ -196,7 +275,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
         <div className="flex items-start justify-between">
           <div>
             <h4 className="font-bold text-gray-900 text-sm">
-              {data.label || (isCurrent ? 'Current State' : 'Snapshot')}
+              {data.label || (isCurrent ? 'Current State' : isForecast ? 'Forecasted Point' : 'Snapshot')}
             </h4>
             {quadrant && (
               <div className="flex items-center mt-1">
@@ -211,6 +290,8 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
           <div className="bg-gray-50 p-1.5 rounded">
             {isCurrent ? (
               <span className="text-xs font-mono bg-red-100 text-red-800 px-2 py-0.5 rounded">CURRENT</span>
+            ) : isForecast ? (
+              <span className="text-xs font-mono bg-purple-100 text-purple-800 px-2 py-0.5 rounded">FORECAST</span>
             ) : (
               <span className="text-xs font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded">SNAPSHOT</span>
             )}
@@ -228,6 +309,14 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
               <p className="font-semibold text-gray-900">{data.x?.toFixed(2) || 'N/A'}</p>
             </div>
           </div>
+          
+          {isForecast && (
+            <div className="mt-3 pt-2 border-t border-gray-100">
+              <p className="text-xs text-purple-600 italic">
+                Projected based on trend from last two snapshots
+              </p>
+            </div>
+          )}
           
           {data.timestamp && (
             <div className="mt-3 pt-2 border-t border-gray-100">
@@ -337,6 +426,20 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
             />
           ))}
           
+          {/* Forecast line from last snapshot to forecast point */}
+          {forecast && (
+            <Line
+              type="linear"
+              dataKey="y"
+              data={[forecast.lastPoint, forecast.point]}
+              stroke="#8b5cf6"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              dot={false}
+              connectNulls={false}
+            />
+          )}
+          
           {/* Connection lines between snapshots */}
           {sortedSnapshots.length > 1 && (
             <Line
@@ -366,6 +469,16 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
                   />
                 ))}
             </Scatter>
+          )}
+          
+          {/* Forecast point */}
+          {forecast && (
+            <Scatter
+              name="Forecast"
+              data={[forecast.point]}
+              shape={renderDot}
+              isAnimationActive={false}
+            />
           )}
           
           {/* Current point */}
@@ -399,7 +512,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
       </div>
       
       <div className="mt-2 text-xs text-gray-400 text-center">
-        <p>Hover over points for details • Click on snapshots to view details</p>
+        <p>Hover over points for details • Click on snapshots to view details{forecast ? ' • Purple point shows trend forecast' : ''}</p>
       </div>
     </div>
   )
