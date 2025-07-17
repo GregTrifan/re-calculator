@@ -12,7 +12,8 @@ import {
   Label, 
   Legend,
   ReferenceArea,
-  Cell
+  Cell,
+  Line
 } from 'recharts';
 // Using Recharts' built-in Tooltip
 
@@ -68,6 +69,18 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
       colors[snapshot.id] = generateColorFromId(snapshot.id);
     });
     return colors;
+  }, [snapshots]);
+
+  // Prepare sorted snapshots for line connections
+  const sortedSnapshots = useMemo(() => {
+    return snapshots
+      .filter(snapshot => snapshot.timestamp)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      .map(snapshot => ({
+        x: snapshot.reLog || 0,
+        y: snapshot.rxScaled || 0,
+        timestamp: snapshot.timestamp
+      }));
   }, [snapshots]);
 
   // Prepare chart data from snapshots and current point
@@ -157,9 +170,9 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
         />
         {payload?.timestamp && (
           <text 
-            x={cx} 
-            y={cy - 10} 
-            textAnchor="middle" 
+            x={cx + 12} 
+            y={cy + 3} 
+            textAnchor="start" 
             fontSize={10} 
             fill="#4b5563"
           >
@@ -207,11 +220,11 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
         <div className="mt-3 pt-3 border-t border-gray-100">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-medium text-gray-500">Regenerative Potential</p>
+              <p className="text-xs font-medium text-gray-500">Regenerative Capacity</p>
               <p className="font-semibold text-gray-900">{data.y?.toFixed(2) || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Extractive Pressure</p>
+              <p className="text-xs font-medium text-gray-500">Realized Regeneration Index</p>
               <p className="font-semibold text-gray-900">{data.x?.toFixed(2) || 'N/A'}</p>
             </div>
           </div>
@@ -243,7 +256,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
     );
   };
 
-  const currentQuadrant = currentPoint ? getQuadrant(currentPoint) : null;
+  //const currentQuadrant = currentPoint ? getQuadrant(currentPoint) : null;
 
   const ticks = [0, 1, 2, 2.751, 3, 4, 5, 5.52];
 
@@ -324,7 +337,18 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
             />
           ))}
           
-          {/* Quadrant labels removed as requested */}
+          {/* Connection lines between snapshots */}
+          {sortedSnapshots.length > 1 && (
+            <Line
+              type="linear"
+              dataKey="y"
+              data={sortedSnapshots}
+              stroke="#9ca3af"
+              strokeWidth={2}
+              dot={false}
+              connectNulls={false}
+            />
+          )}
           
           {/* Data points - snapshots */}
           {snapshots.length > 0 && (
