@@ -248,7 +248,7 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
             fill="#8b5cf6"
             fontWeight="bold"
           >
-            Vector End
+            Forecast Vector
           </text>
         </g>
       );
