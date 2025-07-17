@@ -59,9 +59,46 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
     forecastPoint.x = Math.max(0, Math.min(5.52, forecastPoint.x));
     forecastPoint.y = Math.max(0, Math.min(5.52, forecastPoint.y));
     
+    // Calculate vector endpoint that extends to chart boundaries
+    const calculateVectorEndpoint = (startPoint, vector) => {
+      if (vector.x === 0 && vector.y === 0) return startPoint;
+      
+      // Calculate how far we can extend in each direction
+      let tMax = Infinity;
+      
+      // Check X boundaries
+      if (vector.x > 0) {
+        tMax = Math.min(tMax, (5.52 - startPoint.x) / vector.x);
+      } else if (vector.x < 0) {
+        tMax = Math.min(tMax, (0 - startPoint.x) / vector.x);
+      }
+      
+      // Check Y boundaries
+      if (vector.y > 0) {
+        tMax = Math.min(tMax, (5.52 - startPoint.y) / vector.y);
+      } else if (vector.y < 0) {
+        tMax = Math.min(tMax, (0 - startPoint.y) / vector.y);
+      }
+      
+      // If tMax is still infinity or negative, return start point
+      if (tMax === Infinity || tMax <= 0) return startPoint;
+      
+      return {
+        x: startPoint.x + vector.x * tMax,
+        y: startPoint.y + vector.y * tMax,
+        id: 'vector-end',
+        label: 'Forecast Vector',
+        isVectorEnd: true
+      };
+    };
+    
+    const vectorEndpoint = calculateVectorEndpoint(forecastPoint, vector);
+    
     return {
       point: forecastPoint,
-      lastPoint: lastPoint
+      lastPoint: lastPoint,
+      vectorEndpoint: vectorEndpoint,
+      vector: vector
     };
   };
 
@@ -181,6 +218,41 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
   // Custom dot component for better interactivity
   const renderDot = (props) => {
     const { cx, cy, payload, isCurrent, isForecast } = props;
+    
+    // Vector endpoint (star shape)
+    if (payload?.isVectorEnd) {
+      const starSize = 8;
+      const starPoints = [];
+      for (let i = 0; i < 10; i++) {
+        const angle = (i * Math.PI) / 5;
+        const radius = i % 2 === 0 ? starSize : starSize / 2;
+        const x = cx + Math.cos(angle - Math.PI / 2) * radius;
+        const y = cy + Math.sin(angle - Math.PI / 2) * radius;
+        starPoints.push(`${x},${y}`);
+      }
+      
+      return (
+        <g>
+          <polygon
+            points={starPoints.join(' ')}
+            fill="#8b5cf6"
+            stroke="#8b5cf6"
+            strokeWidth={1}
+            opacity={0.9}
+          />
+          <text 
+            x={cx + 12} 
+            y={cy + 3} 
+            textAnchor="start" 
+            fontSize={9} 
+            fill="#8b5cf6"
+            fontWeight="bold"
+          >
+            Vector End
+          </text>
+        </g>
+      );
+    }
     
     // Forecast point (purple with dashed border)
     if (isForecast || payload?.isForecast) {
@@ -432,11 +504,37 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
               type="linear"
               dataKey="y"
               data={[forecast.lastPoint, forecast.point]}
-              stroke="#8b5cf6"
-              strokeWidth={2}
-              strokeDasharray="5 5"
+               stroke="#8b5cf6"
+              strokeWidth={1.5}
+              strokeDasharray="2 4"
               dot={false}
               connectNulls={false}
+              opacity={0.7}
+            />
+          )}
+          
+          {/* Forecast vector line from forecast point to boundary */}
+          {forecast && forecast.vectorEndpoint && (
+            <Line
+              type="linear"
+              dataKey="y"
+              data={[forecast.point, forecast.vectorEndpoint]}
+              stroke="#8b5cf6"
+              strokeWidth={1.5}
+              strokeDasharray="2 4"
+              dot={false}
+              connectNulls={false}
+              opacity={0.7}
+            />
+          )}
+          
+          {/* Vector endpoint (star) */}
+          {forecast && forecast.vectorEndpoint && (
+            <Scatter
+              name="Forecast Vector"
+              data={[forecast.vectorEndpoint]}
+              shape={renderDot}
+              isAnimationActive={false}
             />
           )}
           
@@ -471,16 +569,6 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
             </Scatter>
           )}
           
-          {/* Forecast point */}
-          {forecast && (
-            <Scatter
-              name="Forecast"
-              data={[forecast.point]}
-              shape={renderDot}
-              isAnimationActive={false}
-            />
-          )}
-          
           {/* Current point */}
           {currentPoint && (
             <Scatter
@@ -499,12 +587,6 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
           <ChartTooltip 
             content={<CustomTooltip />} 
             cursor={{ stroke: '#d1d5db', strokeWidth: 1, strokeDasharray: '3 3' }}
-          />
-          <Legend 
-            wrapperStyle={{
-              paddingTop: '20px',
-              fontSize: '12px'
-            }}
           />
         </ScatterChart>
           </ResponsiveContainer>
