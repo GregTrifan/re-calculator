@@ -18,46 +18,73 @@ import {
 // Using Recharts' built-in Tooltip
 
 const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
-  // Modular forecasting function using vector extrapolation
+  // Modular forecasting function using Re/Rx formula simulation
   const calculateForecast = (snapshots) => {
-    if (snapshots.length < 2) return null;
+    if (snapshots.length < 1) return null;
     
-    // Get the last two snapshots sorted by timestamp
+    // Get the latest snapshot sorted by timestamp
     const sortedSnapshots = snapshots
       .filter(snapshot => snapshot.timestamp)
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     
-    if (sortedSnapshots.length < 2) return null;
+    if (sortedSnapshots.length < 1) return null;
+    
+    const latestSnapshot = sortedSnapshots[sortedSnapshots.length - 1];
+    
+    // Extract current metrics from the latest snapshot
+    const currentMetrics = latestSnapshot.metrics || {
+      L: 5, I: 5, F: 5, E: 5, X: 5, Fg: 5, Omega: 5
+    };
+    
+    const currentRxIndicators = latestSnapshot.rxIndicators || [];
+    
+    // Simulate next period metrics with growth rates
+    // Regenerative variables (L, I, F, E) increase by 5%
+    // Entropic variables (X, Fg, Omega) increase by 2%
+    const forecastMetrics = {
+      L: Math.min(10, currentMetrics.L * 1.05),
+      I: Math.min(10, currentMetrics.I * 1.05),
+      F: Math.min(10, currentMetrics.F * 1.05),
+      E: Math.min(10, currentMetrics.E * 1.05),
+      X: Math.min(10, currentMetrics.X * 1.02),
+      Fg: Math.min(10, currentMetrics.Fg * 1.02),
+      Omega: Math.min(10, currentMetrics.Omega * 1.02)
+    };
+    
+    // Calculate Re(t+1) using the ReRx formula
+    const numerator = forecastMetrics.L * forecastMetrics.I * forecastMetrics.F * forecastMetrics.E;
+    const denominator = forecastMetrics.X + forecastMetrics.Fg + forecastMetrics.Omega;
+    const reRaw = denominator !== 0 ? numerator / denominator : Infinity;
+    const reLog = Math.log10(reRaw + 1);
+    
+    // Simulate Rx(t+1) as 98% of current Rx (configurable decay)
+    const currentRx = latestSnapshot.rxScaled || 0;
+    const rxDecayRate = 0.98; // Configurable for scenario toggling
+    const forecastRx = currentRx * rxDecayRate;
+    
+    // Create forecast point
+    const forecastPoint = {
+      x: Math.max(0, Math.min(5.52, reLog)),
+      y: Math.max(0, Math.min(5.52, forecastRx)),
+      id: 'forecast',
+      label: 'Re/Rx Forecast',
+      isForecast: true,
+      timestamp: null,
+      metrics: forecastMetrics,
+      reLog: reLog,
+      rxScaled: forecastRx
+    };
     
     const lastPoint = {
-      x: sortedSnapshots[sortedSnapshots.length - 1].reLog || 0,
-      y: sortedSnapshots[sortedSnapshots.length - 1].rxScaled || 0
+      x: latestSnapshot.reLog || 0,
+      y: latestSnapshot.rxScaled || 0
     };
     
-    const secondLastPoint = {
-      x: sortedSnapshots[sortedSnapshots.length - 2].reLog || 0,
-      y: sortedSnapshots[sortedSnapshots.length - 2].rxScaled || 0
-    };
-    
-    // Calculate vector from second-last to last point
+    // Calculate vector from last point to forecast point
     const vector = {
-      x: lastPoint.x - secondLastPoint.x,
-      y: lastPoint.y - secondLastPoint.y
+      x: forecastPoint.x - lastPoint.x,
+      y: forecastPoint.y - lastPoint.y
     };
-    
-    // Extrapolate to get forecast point
-    const forecastPoint = {
-      x: lastPoint.x + vector.x,
-      y: lastPoint.y + vector.y,
-      id: 'forecast',
-      label: 'Forecast',
-      isForecast: true,
-      timestamp: null // No timestamp for forecast
-    };
-    
-    // Ensure forecast stays within chart bounds
-    forecastPoint.x = Math.max(0, Math.min(5.52, forecastPoint.x));
-    forecastPoint.y = Math.max(0, Math.min(5.52, forecastPoint.y));
     
     // Calculate vector endpoint that extends to chart boundaries
     const calculateVectorEndpoint = (startPoint, vector) => {
@@ -334,78 +361,41 @@ const QuadrantChart = ({ snapshots = [], currentPoint, onPointClick }) => {
   };
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload || !payload.length) return null;
-
-    const data = payload[0].payload;
-    const isCurrent = data.isCurrent;
-    const isForecast = data.isForecast;
-    const quadrant = getQuadrant(data);
-    
-    return (
-      <div className="bg-white p-4 rounded-lg shadow-xl border border-gray-200 max-w-[280px]">
-        <div className="flex items-start justify-between">
-          <div>
-            <h4 className="font-bold text-gray-900 text-sm">
-              {data.label || (isCurrent ? 'Current State' : isForecast ? 'Forecasted Point' : 'Snapshot')}
-            </h4>
-            {quadrant && (
-              <div className="flex items-center mt-1">
-                <span 
-                  className="inline-block w-2 h-2 rounded-full mr-2" 
-                  style={{ backgroundColor: quadrant.color }}
-                />
-                <span className="text-xs font-medium text-gray-600">{quadrant.label}</span>
-              </div>
-            )}
-          </div>
-          <div className="bg-gray-50 p-1.5 rounded">
-            {isCurrent ? (
-              <span className="text-xs font-mono bg-red-100 text-red-800 px-2 py-0.5 rounded">CURRENT</span>
-            ) : isForecast ? (
-              <span className="text-xs font-mono bg-purple-100 text-purple-800 px-2 py-0.5 rounded">FORECAST</span>
-            ) : (
-              <span className="text-xs font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded">SNAPSHOT</span>
-            )}
-          </div>
-        </div>
-        
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs font-medium text-gray-500">Regenerative Capacity</p>
-              <p className="font-semibold text-gray-900">{data.y?.toFixed(2) || 'N/A'}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-500">Realized Regeneration Index</p>
-              <p className="font-semibold text-gray-900">{data.x?.toFixed(2) || 'N/A'}</p>
-            </div>
-          </div>
-          
-          {isForecast && (
-            <div className="mt-3 pt-2 border-t border-gray-100">
-              <p className="text-xs text-purple-600 italic">
-                Projected based on trend from last two snapshots
-              </p>
-            </div>
-          )}
-          
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      
+      return (
+        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
+          <p className="font-semibold text-gray-800">
+            {data.isForecast ? 'Forecast Vector' : 
+             data.isVectorEnd ? 'Forecast Vector Endpoint' :
+             data.isCurrent ? 'Current State' : 
+             data.label || 'Snapshot'}
+          </p>
           {data.timestamp && (
-            <div className="mt-3 pt-2 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
-                {new Date(data.timestamp).toLocaleString(undefined, {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </p>
-            </div>
+            <p className="text-sm text-gray-600">
+              Date: {formatDate(data.timestamp)}
+            </p>
+          )}
+          <p className="text-sm text-blue-600">
+            Re (log): {data.x?.toFixed(3)}
+          </p>
+          <p className="text-sm text-green-600">
+            Rx (scaled): {data.y?.toFixed(3)}
+          </p>
+          <p className="text-sm text-purple-600">
+            Quadrant: {getQuadrant(data.x, data.y)}
+          </p>
+          {data.isForecast && (
+            <p className="text-xs text-gray-500 mt-1">
+              Simulated using Re/Rx formulas with growth assumptions
+            </p>
           )}
         </div>
-      </div>
-    );
+      );
+    }
+    return null;
   };
 
   // Get quadrant for a point
